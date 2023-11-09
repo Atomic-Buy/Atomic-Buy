@@ -78,12 +78,13 @@ Every payee and payer has its own reusable ECDSA key pairs `k = (esk, epk)`.
 The proof of payment claim that "I have payed for content `C`".
 In lightning network, a payment is finished when a sha256 hash `h`'s preimage revealed to the payer. 
 
-The proof of payment `PoP` consists of the following parts: 
-- `h_payer = poseidon_hash(sk_payer)`: the ciminion secret key of buyers 
-- `h` : the sha256 hash of a preimage 
-- `MAC`: the content's MAC that the payer wants. 
-- `timestamp`: payment deadline for payer. 
-- `sig`: payee's signature of the three elements above
+The proof of payment `PoP` consists of two following parts: 
+- `Receipt`: 
+    - `h_payer = poseidon_hash(sk_payer)`: the ciminion secret key of buyers 
+    - `h` : the sha256 hash of a preimage 
+    - `MAC`: the content's MAC that the payer wants. 
+    - `timestamp`: payment deadline for payer. 
+    - `sig`: payee's signature of the three elements above
 - `pre-image`: preimage of `h`
 
 Anyone can verify this prove by verfity that if: `sign_{k_payee}(h_payer, h, timestamp) == sig && sha256(pre-image) == h`. 
@@ -104,11 +105,31 @@ The proof of `CoD` is denoted as `PoD`.
 
 Anyone can verify the `PoD` by querying `h_payer, COM` from the the `Judge`. 
 
-## Design 
+## Design Abstract 
 
+The goal of this project is to make the digital content purchase trustless and minimize the cost to achieve trustless. We achieve this by simulating the traditional Web2 e-store platform scenario, where merchant need to deposit some money when they wants to open a store in the platform like Amazon and Taobao, and the customer can ask the platform to decide whether the merchant have some misbehavior when they think they has been treated unfairly. 
+
+In our trustless implementation, the "platfrom" is replaced by a blockchain L1 or L2(denoted as `Judge`), which provides transparent and trustless computation. Like the traditional e-commerce platform, merchant need to deposit something on `Judge`, which make merchant accountable when they doing wrong. 
+
+![Abstract of the design of atomic buy](./design.png)
+
+
+We seperate the whole process into 4 phrases: 
+- Phrase One: Content Registration. Just like what we do in e-commercial platform merchants need to list the product in their store, n the atomic-buy, merchant need to commit the content and its price on `Judge` , and deposit some funds on `Judge`. This will make the merchant accoutable. Meanwhile, Merchants need to build`PoC` of content. After that, Merchant can distributed the encrypted content and `PoC` in any platform like Twitter or Nostr.  And protencial customer can verity the quality of the content, and they can make sure that the the ciphertex they recieve is aligned with the content commited on `Judge`.  
+- Phrase Two: Make Payment. Thanks to the beauty of LN, a payment proof `PoP`("alice pay `x` sats for content `c` before time `T`") can be built only with merchant and customer. Once the customer get the `PoP`, they can ask `Judge` for customer service when something bad happened. 
+- Phrase Three: Content delivery: Once the merchant believe that the bill has been payment, it need to delivery the key that can unlocked the ciphertext asap to the customer in any message routine platform. 
+- Phrase Four: challenge. The goal of challenge is to make sure the keys must be delivered to customer through `Judge`. Merchant need to build a `PoD` to prove the keys. If the Merchant can not provide `PoD` in time, the `Judge` will fine the merchant and conpensate the customer. 
+
+## Security Model 
+
+
+## Attacks 
+
+## 
 
 ## Implementation 
 
+## Cost 
 
 ## Roadmap 
 
