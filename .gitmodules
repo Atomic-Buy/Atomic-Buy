@@ -1,0 +1,3 @@
+[submodule "circom_tester"]
+	path = circom_tester
+	url = https://github.com/Vieloooo/circom_tester.git
