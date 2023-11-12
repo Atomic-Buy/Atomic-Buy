@@ -18,8 +18,11 @@ We introduce Atom Buy, a framework designed to facilitate trustless and atomic t
 
 ![basic structure](./doc/structure.png)
 
+Core ZK Circuits 
+![Cor ZK proof](./doc/pod.png)
 ## Workflow 
 ![basic workflow](./doc/design.png)
+
 
 For more detail, please read our white paper: [Draft 0.11](./doc/design.md)
 
