@@ -7,6 +7,7 @@ A decentralized service for paid content distribution that leverages the power o
 - **Full Revenue**: Enjoy the entirety of your content sales profits without any deductions.
 
 **For customers:**
+- **Content Claim**: Make sure you get the content that creator claimed as long as you paid. 
 - **Atomic Purchases**: Experience the assurance that once payment is made, the delivery of your digital content is guaranteed by our robust system.
 - **Zero Hidden Fees**: Our atomic purchase process is transparent, with no additional costs besides LN fee.
 - **Guaranteed Compensation**: In the rare event of merchant misconduct, our system holds merchants accountable and ensures you receive due compensation.
