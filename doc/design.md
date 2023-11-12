@@ -19,9 +19,9 @@ In contrast, independent distribution methods that creators might use, like mail
 
 To tackle the aforementioned issues, we propose a decentralized paid content distribution (DPCD) framework. Our system ensures:
 
-**Content Pre-commitment**: Every piece of content that merchants wish to sell is pre-committed to a trustless third party. Customers can verify the content before completing the purchase.
-**Atomic Purchase**:The delivery of your digital content is secured by our dependable system once you make the payment. 
-**Guaranteed Compensation**: Should merchant misconduct occur, our system holds the merchants responsible and guarantees that customers receive appropriate compensation.
+- **Content Pre-commitment**: Every piece of content that merchants wish to sell is pre-committed to a trustless third party. Customers can verify the content before completing the purchase.
+- **Atomic Purchase**:The delivery of your digital content is secured by our dependable system once you make the payment. 
+- **Guaranteed Compensation**: Should merchant misconduct occur, our system holds the merchants responsible and guarantees that customers receive appropriate compensation.
 
 Leveraging this framework, we can create a range of decentralized counterparts to Web2 services, circumventing the pitfalls of centralization.  Furthermore, the Atomic Buy itself can serve as an incentivization layer within existing content distribution applications such as Nostr, IPFS, and BitTorrent.
 
