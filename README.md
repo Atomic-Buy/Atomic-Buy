@@ -1,6 +1,8 @@
 # Atomic Buy
 
-A decentralized service for paid content distribution that leverages the power of the Lightning Network to facilitate atomic and trust-free transactions for any digital content purchase. By utilizing Zero-Knowledge Proofs (ZK proofs), we ensure that each transaction is not only verifiable but also secure under the protection of L1/L2 blockchain solutions. 
+Atom Buy: A Decentralized Framework for Trustless and Atomic Content Transactions on the Lightning Network
+
+We introduce Atom Buy, a framework designed to facilitate trustless and atomic transactions for digital content purchases over the Lightning Network. Our proposed scheme ensures accountability for all digital content and enables each transaction to be atomic and verifiable through the application of cryptographic primitives such as Zero-Knowledge Proofs (ZKP). Furthermore, we leverage blockchain technology to safeguard each purchase and to monitor and address any instances of misconduct.
 
 **For content creators(merchants):**
 - **Trustless Transaction**: Make your digital content trusted by protential customers with **`O(1)` cost**. 
