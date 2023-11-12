@@ -19,6 +19,6 @@ A decentralized service for paid content distribution that leverages the power o
 ## Workflow 
 ![basic workflow](./doc/design.png)
 
-For more detail, please read our white paper: [Draft 0.1](./doc/design.md)
+For more detail, please read our white paper: [Draft 0.11](./doc/design.md)
 
 
