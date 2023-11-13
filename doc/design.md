@@ -69,8 +69,10 @@ In our trustless and decentralized model, the "platform"'s Job is substituted by
         - `PT`: `plaintext[N*2]`
 We define a set of secret key `sk = [master key 1, master key 2, nonce, IV]`, and we denote alice's `sk` as `sk_alice`. 
 
-### Poseidon Hash 
-A zk-friendly hash function.                                          
+### Hash 
+We use two different hash functions in our system: 
+- Poseidon hash: a zk-friendly hash function, we use this hash function when we need to prove the ownership of perimages. 
+- Sha256: an efficient hash function, we use this in Merkle Tree construction.                                     
 
 ## Terminology 
 
@@ -88,7 +90,7 @@ For a digital content(as a vector of bytes) `C` we can parse the content to plai
 After plaintext division, we generate cominion keys to encrypt each chunk `PTC_i` to ciphertext chunk `CTC_i`. For each `PTC_i`, we will derive a secret key `sk_payee_i` to encrypt this chunk by tunning the nonce of `sk_payee`. `sk_payee_i <= sk_payee` and `sk_i.nonce <= poseidon_hash(sk.nonce, i)`. ciphertext chunk i `CTC_i = Enc(sk_payee_i, PT_i).CT `. 
 
 We define `COM_i` as the content commitment of `PTC_i`, where `COM_i =  poseidon_hash(CTC_i)`
-Then we build a merkle tree from `COM_i` with poseidon hash, generating the merkle root hash `COM`. 
+Then we build a merkle tree from `COM_i` using sha256, generating the merkle root hash `COM`. 
 
 ![](/doc/enc.png)
 
@@ -126,15 +128,15 @@ The proof of Purchase `PoP` consists of two following parts:
 
 ### Challenge 
 
-Upon settling the bill, the payer expects the payee to provide the decryption keys (sk_payee), which are used to decrypt CTC_i. Should the payer not receive the correct keys as anticipated, they have the option to appeal to a Judge for resolution, akin to contacting customer service in real-life scenarios. This procedure is referred as a challenge.
+Upon settling the bill, the payer expects the payee to provide the decryption keys (`sk_payee`), which are used to decrypt `CTC_i`. Should the payer not receive the correct keys as anticipated, they have the option to appeal to a Judge for resolution, akin to contacting customer service in real-life scenarios. This procedure is referred as a challenge.
 
-During the challenge phase, the payer must submit a challenge dataset CD to the Judge. This dataset CD comprises (PoP, r, COM_r, Merkle_path_r), where r represents a randomly selected leaf number from the CTC Merkle tree's leaves.
+During the challenge phase, the payer must submit a challenge evidence `CE` to the Judge. This evidence `CE` comprises (`PoP`, `r`, `COM_r`, `Merkle_path_r`), where `r` represents a randomly selected leaf number from the CTC Merkle tree's leaves.
 
 The submission to the Judge conveys the following message: **"I have remitted payment for the content COM, and I request the seller to provide the decryption keys for the r-th ciphertext chunk COM_r."**
 
 Upon receiving the challenge request from the customer, the Judge is tasked with validating the request by:
 
-- Verifying the proof of payment (PoP).
+- Verifying the proof of payment (`PoP`).
 - Confirming the membership of `COM_r` by verifing the Merkle path. 
 
 ### Proof of Delivery 
@@ -166,6 +168,9 @@ We seperate the whole process into 4 phases:
 - **Phase Two**: Payment. Leveraging the advantages of the Lightning Network (LN), a payment proof PoP ("alice pays x satoshis for content `c` before time `T`") can be established solely between the merchant and customer. Should any issues arise, the customer can present the `PoP` to Judge for resolution.
 - **Phase Three**: Content delivery: Once the merchant believe that the bill has been payment, it need to delivery the key that can unlocked the ciphertext ASAP to the customer in any message routine platform. 
 - **Phase Four**:  Challenge. The challenge phase ensures that keys are delivered to the customer via Judge. Merchants are required to construct a Proof of Delivery (PoD) to verify the delivery of keys. Failure to provide a `PoD` within the stipulated timeframe results in penalties imposed by Judge on the merchant and compensation awarded to the customer.
+
+## Bond contract on Judge 
+Content commitment, 
 
 
 
