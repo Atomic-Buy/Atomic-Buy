@@ -110,18 +110,21 @@ customer can verify the ciphertext of content `PT` by  building merkle tree from
 
 When a customer want to buy some content committed by `COM`, it make a `Purchase Request` to Merchant. The request contain `(sk_payer, COM)`,which tell the merchant that **"I want to by content committed by `COM`, and give me the decryption key `sk_payee` safely, by encypted `sk_payee` using `sk_payer`**. 
 
-### Proof of Purchase
-
-The proof of purchase proves that **"I have paid enough money for content `C`"**.
-In lightning network, a payment is settled when the sha256 hash `h` of a preimage revealing to the payer. 
-
-The proof of Purchase `PoP` consists of two following parts: 
+When the merchant received the request, it will return a `receipt` to cumstomer: 
 - `Receipt`: 
     - `h_sk_payer = poseidon_hash(sk_payer)`: the ciminion secret key of buyers 
     - `h` : the sha256 hash of a preimage 
     - `COM`: the content that the payer wants. 
     - `timestamp`: payment deadline for payer. 
     - `sig`: payee's signature of elements above
+
+### Proof of Purchase
+
+The proof of purchase proves that **"I have paid enough money for content `C`"**.
+In lightning network, a payment is settled when the sha256 hash `h` of a preimage revealing to the payer. 
+
+The proof of Purchase `PoP` consists of two following parts: 
+- `Receipt`
 - `pre-image`: preimage of `h`
 
 `Judge` can verify this prove by verfity that if: `sign_{k_sk_payee}(h_sk_payer, h, timestamp) == sig && sha256(pre-image) == h`. 
@@ -169,8 +172,6 @@ We seperate the whole process into 4 phases:
 - **Phase Three**: Content delivery: Once the merchant believe that the bill has been payment, it need to delivery the key that can unlocked the ciphertext ASAP to the customer in any message routine platform. 
 - **Phase Four**:  Challenge. The challenge phase ensures that keys are delivered to the customer via Judge. Merchants are required to construct a Proof of Delivery (PoD) to verify the delivery of keys. Failure to provide a `PoD` within the stipulated timeframe results in penalties imposed by Judge on the merchant and compensation awarded to the customer.
 
-## Bond contract on Judge 
-Content commitment, 
 
 
 
