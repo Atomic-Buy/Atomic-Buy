@@ -71,8 +71,8 @@ We define a set of secret key `sk = [master key 1, master key 2, nonce, IV]`, an
 
 ### Hash 
 We use two different hash functions in our system: 
-- Poseidon hash: a zk-friendly hash function, we use this hash function when we need to prove the ownership of perimages. 
-- Sha256: an efficient hash function, we use this in Merkle Tree construction.                                     
+- Poseidon hash: a zk-friendly hash function, we use this hash function when we need to prove the ownership of perimages.  
+- Sha256: an efficient hash function, we use this in Merkle Tree construction.                                   
 
 ## Terminology 
 
@@ -171,6 +171,32 @@ We seperate the whole process into 4 phases:
 - **Phase Two**: Payment. Leveraging the advantages of the Lightning Network (LN), a payment proof PoP ("alice pays x satoshis for content `c` before time `T`") can be established solely between the merchant and customer. Should any issues arise, the customer can present the `PoP` to Judge for resolution.
 - **Phase Three**: Content delivery: Once the merchant believe that the bill has been payment, it need to delivery the key that can unlocked the ciphertext ASAP to the customer in any message routine platform. 
 - **Phase Four**:  Challenge. The challenge phase ensures that keys are delivered to the customer via Judge. Merchants are required to construct a Proof of Delivery (PoD) to verify the delivery of keys. Failure to provide a `PoD` within the stipulated timeframe results in penalties imposed by Judge on the merchant and compensation awarded to the customer.
+
+## Bond Contract in Judge 
+
+The Judge contract has two main goals:
+- To act as a hub holding content commitments.
+- To serve as a judge when content creators defraud customers.
+
+### Requirements
+
+Every user (both merchants and customers) must have an identity keypair in Judge, similar to other blockchain systems. Judge utilizes two types of tokens: the execution token (`eToken`) and the deposit token (`dToken`). `eToken` is used to pay for Judge's execution costs (akin to gas fees in Ethereum), while `dToken` is used as a security deposit. There is no strict distinction between `eToken` and `dToken`; a single token can serve both purposes. Every call to Judge incurs a transaction fee payable in `eToken`.
+
+## Interface
+
+For the data commitment phase, Judge provides the following interfaces to merchants:
+- **Create a store**: A merchant deposits some `dToken` and opens a store.
+- **Close a store**: The store is closed, and all contents from this store are set to "removed". The security deposit is locked for a buffer period until all potential cases are settled.
+- **Withdraw a store**: After the buffer period, the merchant can withdraw the remaining deposit.
+- **Upload content**: A merchant uploads the content commitment along with the corresponding data to Judge. A content commitment must be attached to a store owned by the merchant.
+- **Remove content**: The content state is set to "removed".
+
+For the challenge phase, Judge provides:
+- **Sue a store**: Any user can submit challenge evidence (`CE`) and the store they wish to sue. Judge verifies the evidence, and if valid, initiates a new case and starts a timer for the merchant to defend themselves. If the timer expires, the security deposit is slashed, and the user is compensated according to a preset configuration.
+- **Defend a case**: The store owner defends the case using `PoD`.
+
+> For more implementation detail, please check [Judge Design](./judge_contract.md). 
+
 
 
 
