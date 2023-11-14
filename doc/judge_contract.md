@@ -31,6 +31,7 @@ For Challenge phase, `Judge` provides:
 - `Case list`: list of undergoing cases. 
 - `case number`: next case number. from zero. 
 - `store_2_contents map`: a hashmap from store index to a dynamic array of contents. `mapping(uint256 => uint256[])`. 
+- `case recorder`: a hashmap `mapping(uint256 => bool)`
 
 `Store`: 
 - Creator Name: 
@@ -132,6 +133,7 @@ Each case will be an object in `Judge`. Each case will maintain:
 - Outputs: 
     - case id
 - workflow: 
+    - check `case recorder`: if `PoP.h` is in the `case recorder, remove it`. 
     - check `challenge deposit`
     - check store status: the store must not be "closed". 
     - check signature: check sig is the correct sign from `store_list[store_index]`
@@ -140,6 +142,7 @@ Each case will be an object in `Judge`. Each case will maintain:
     - check preimage: check if `h = sha256(preimage)`
     - check membership: computer the merkle result from `(COM_r,merkle_path)`, check if the merkle result equal to `content_list[content_index].COM`
     - new a case this challenge based on current context. 
+    - add case's payment hash `h` to the `case recoder`. 
     - set case timeout height. 
     - update the store's amount.  
     - return the new case id. 
