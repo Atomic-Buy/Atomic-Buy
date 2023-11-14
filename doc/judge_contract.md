@@ -154,7 +154,8 @@ Each case will be an object in `Judge`. Each case will maintain:
 - Outputs: 
     - result 
 - Workflow: 
-    - locate case: use case id locate case. 
+    - check ownership: only store owner can call this function.
+    - locate case: use case id locate case.  
     - generate public inputs for verification. 
     - using the verifcation code to verify the `PoD`. 
     - if verification pass: 
