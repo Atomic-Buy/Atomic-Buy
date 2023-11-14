@@ -33,7 +33,7 @@ For the challenge phase, Judge provides:
 - Case list: A list of ongoing cases.
 - Case number: The next case number, starting from zero.
 - `store_2_contents map`: A hashmap from store index to a dynamic array of contents (`mapping(uint256 => uint256[])`).
-- `case recorder`: A hashmap (`mapping(uint256 => bool)`).
+- `case recorder`: A hashmap (`mapping((payment_hash, r) => bool)`).
 
 `Judge` also has some pre-configed parameters, and all time are counted on block numbers: 
 - `dToken` address: this define which `dToken` we use in this `Judge`. 
@@ -148,7 +148,7 @@ Each case is an object in Judge, maintaining:
 - Outputs:
     - Case ID.
 - Workflow:
-    - Check `case recorder`: If `PoP.h` is in the recorder, remove it.
+    - Check `case recorder`: If `PoP.h and PoP.r` is in the recorder, remove it.
     - Check warranty: Ensure `timestamp + warranty < current height`.
     - Verify `challenge deposit`, check if suer paid enough `challenge deposit`. 
     - Check store status: The store must not be "closed".

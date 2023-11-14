@@ -39,7 +39,7 @@ In our trustless and decentralized model, the "platform"'s Job is substituted by
 **Payment network** is where users pay some cryptocurrency to the merchants, and generate a veriable proof of purchase "I spent x money for product(content) C". The proof of purchase is the primitives for `Judge` esttle the arguments between merchants and customers. In our implementation, we use Lightning Network as the payment network, as it can easily settle a `PoP` lighting fast without onchain verification. 
 
 
-**Judge** is a accountable and verifable third party, which is secured by a blockchain L1/L2, or it can be a L1 itself. Similar to a conventional e-commerce platform, merchants are obliged to place a deposit on `Judge`, which holds them accountable in cases of wrongdoing. And `Judge` can detect and punish those who cheat in a content purchase, which make the purchase trustless for customers. 
+**Judge** is a accountable and verifable third party, which is secured by a blockchain L1/L2. `Judge` can be a smart contract deployed on any L1/L2, or be a L3 protected by L1/L2 through rollup methods. Similar to a conventional e-commerce platform, merchants are obliged to place a deposit on `Judge`, which holds them accountable in cases of wrongdoing. And `Judge` can detect and punish those who cheat in a content purchase, which make the purchase trustless for customers. 
 
 ## Primitives 
 
@@ -182,7 +182,7 @@ The Judge contract has two main goals:
 
 Every user (both merchants and customers) must have an identity keypair in Judge, similar to other blockchain systems. Judge utilizes two types of tokens: the execution token (`eToken`) and the deposit token (`dToken`). `eToken` is used to pay for Judge's execution costs (akin to gas fees in Ethereum), while `dToken` is used as a security deposit. There is no strict distinction between `eToken` and `dToken`; a single token can serve both purposes. Every call to Judge incurs a transaction fee payable in `eToken`.
 
-## Interface
+### Interface
 
 For the data commitment phase, Judge provides the following interfaces to merchants:
 - **Create a store**: A merchant deposits some `dToken` and opens a store.

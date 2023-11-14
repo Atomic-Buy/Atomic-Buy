@@ -1,6 +1,6 @@
 pragma circom 2.1.0;
 
-include "./poseidon.circom";
+include "./poseidon/poseidon.circom";
 
 
 //a merkle layer with 8^N leaves
@@ -40,6 +40,21 @@ template hash512(){
     }
     for(var i = 0; i < 64; i++){
         l2.in[i] <== l3.out[i];
+    }
+    for(var i = 0; i < 8; i++){
+        l1.in[i] <== l2.out[i];
+    }
+    out <== l1.out[0];
+}
+
+template hash64(){
+    signal input in[64]; 
+    signal output out;
+    component l2 = LayerN(2);
+    component l1 = LayerN(1);
+    // write them together
+    for(var i = 0; i < 64; i++){
+        l2.in[i] <== in[i];
     }
     for(var i = 0; i < 8; i++){
         l1.in[i] <== l2.out[i];
