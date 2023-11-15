@@ -133,7 +133,7 @@ The proof of Purchase `PoP` consists of two following parts:
 
 Upon settling the bill, the payer expects the payee to provide the decryption keys (`sk_payee`), which are used to decrypt `CTC_i`. Should the payer not receive the correct keys as anticipated, they have the option to appeal to a Judge for resolution, akin to contacting customer service in real-life scenarios. This procedure is referred as a challenge.
 
-During the challenge phase, the payer must submit a challenge evidence `CE` to the Judge. This evidence `CE` comprises (`PoP`, `r`, `COM_r`, `Merkle_path_r`), where `r` represents a randomly selected leaf number from the CTC Merkle tree's leaves.
+During the challenge phase, the payer must submit a challenge evidence `CE` to the Judge. This evidence `CE` comprises (`PoP`, `COM_r`, `Merkle_path_r`), where `r` represents a randomly selected leaf number from the CTC Merkle tree's leaves.
 
 The submission to the Judge conveys the following message: **"I have remitted payment for the content COM, and I request the seller to provide the decryption keys for the r-th ciphertext chunk COM_r."**
 
@@ -148,7 +148,7 @@ Once a payee find someone `challenge` him. The payee must proof it has delivered
 
 
 ![](/doc/pod.png)
-We denoted the claim of delivery as `CoD`, where `CoD(public h_sk_payer, public h_sk_payee, public COM_r, public r, sk_payee, sk_payer, PTC_r) -> CT_sk ` will claim: 
+We denoted the claim of delivery as `CoD`, where `CoD(public h_sk_payer, public h_sk_payee, public COM_r, r, sk_payee, sk_payer, PTC_r) -> CT_sk ` will claim: 
 - `poseidon_hash(sk_payee) == h_sk_payee` and 
 - `sk_payee_r.nonce = poseidon_hash( (sk_payee.nonce  || r) )` and 
 - `Enc(sk_payee_r, PTC_r) = CTC_r` and 

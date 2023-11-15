@@ -168,7 +168,6 @@ Each case is an object in Judge, maintaining:
     - `h_sk_payee`
     - `h_sk_payer`
     - `COM_r`
-    - `r`
     - `CT_sk`
     - `PoD` 
 - Ouputs: 
