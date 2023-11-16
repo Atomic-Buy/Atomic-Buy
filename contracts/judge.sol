@@ -227,3 +227,5 @@ function verifyMerkle( bytes32 leaf, bytes32[] calldata path, bytes32 root){
     // Check if the computed hash (root) is equal to the provided root
     assert(computedHash == root);
 }
+
+functio 
