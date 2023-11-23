@@ -110,7 +110,14 @@ Each case is an object in Judge, maintaining:
     - Check if the current height is greater than the close time.
     - Set the store to "closed".
     - If there is a remaining security deposit, perform an ERC20 transfer from the Judge address to the store owner.
-
+`fund store`: 
+- Inputs: 
+    - A `dToken` transfer from the message sender to the Judge address.
+    - store id
+- Workflows: 
+    - check transfer 
+    - check store id 
+    - add up the store's total deposit
 `create content`:
 - Inputs:
     - Store index.

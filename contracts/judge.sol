@@ -4,19 +4,34 @@ pragma solidity ^0.8.0;
 interface IERC20 {
     function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
     function transfer(address recipient, uint256 amount) external returns (bool);
+    function allowance(address owner, address spender) external view returns (uint256);
 }
+
+
 
 contract Judge {
     IERC20 public dToken;
     address public judgeAddress;
-    uint256 public min_deposit = 10; 
+    uint256 public minDeposit = 10; 
     uint256 public challengeDepositAmount = 10;
+    uint256 public storeBufferTime = (1 + 7 + 3 + 3 + 1) * 24 * 60 * 5; // 14 days blocks
+    uint256 public minWarranty = 3 * 24 * 60 * 5; // 3 days blocks
+    uint256 public maxWarranty = 7 * 24 * 60 * 5; // 7 days blocks
+    enum StoreState {
+        Open,
+        ToBeClosed,
+        Closed
+    }
+    enum ContentState{
+        OnSale,
+        Removed
+    }
     struct Store {
         string creatorName;
         address owner;
         uint256 depositAmount;
         uint256 potentialPunishment;
-        string state;
+        StoreState state;
         uint256 closeTime;
     }
 
@@ -27,7 +42,7 @@ contract Judge {
         uint256 finedAmount;
         uint256 storeIndex;
         uint256 warranty;
-        string state;
+        ContentState state;
     }
 
     struct Case {
@@ -49,23 +64,28 @@ contract Judge {
 
 
     mapping(uint256 => uint256[]) public storeToContents;
-    // k = sha256(COM, h) v = bool 
+    // k = keccak(COM, h) v = bool 
     mapping(bytes32 => bool) public caseRecorder;
 
     constructor(address _dTokenAddress) {
         dToken = IERC20(_dTokenAddress);
-        judgeAddress = msg.sender;
+        judgeAddress = address(this); 
     }
 
-    function createStore(string memory creatorName) external returns (uint256 storeIndex) {
-        require(dToken.transferFrom(msg.sender, address(this), min_deposit), "dToken transfer failed");
+    function createStore(string memory creatorName, uint256 depositAmount) external returns (uint256 storeIndex) {
+        require(depositAmount > minDeposit, "Deposit is less than required");
+        // get the total transfered dToken amount 
+        uint256 allowedAmount = dToken.allowance(msg.sender, judgeAddress );
+        require(allowedAmount >= depositAmount, "Not enough tokens approved for transfer");
+        // transfer enough dToken to judgeAddress
+        require(dToken.transferFrom(msg.sender, judgeAddress, depositAmount), "Token transfer failed");
 
         Store memory newStore = Store({
             creatorName: creatorName,
             owner: msg.sender,
-            depositAmount: 10 ether, // Example deposit amount
+            depositAmount: depositAmount, // Example deposit amount
             potentialPunishment: 0,
-            state: "open",
+            state: StoreState.Open,
             closeTime: 0
         });
 
@@ -73,29 +93,41 @@ contract Judge {
         storeList.push(newStore);
         return storeIndex;
     }
+    function fundStore(uint256 storeIndex, uint256 amount) external {
+        Store storage store = storeList[storeIndex];
+        require(store.owner == msg.sender, "Only the owner can fund the store");
+        require(store.state == StoreState.Open, "Store must be open");
+        // get the total transfered dToken amount 
+        uint256 allowedAmount = dToken.allowance(msg.sender, judgeAddress );
+        require(allowedAmount >= amount, "Not enough tokens approved for transfer");
+        // transfer enough dToken to judgeAddress
+        require(dToken.transferFrom(msg.sender, judgeAddress, amount), "Token transfer failed");
+        store.depositAmount += amount;
+    }
 
     function closeStore(uint256 storeIndex) external {
         Store storage store = storeList[storeIndex];
         require(store.owner == msg.sender, "Only the owner can close the store");
-        require(keccak256(bytes(store.state)) == keccak256(bytes("open")), "Store must be open");
-
+        require(store.state == StoreState.Open,  "Store must be open");
+        // get contents index 
         uint256[] storage contents = storeToContents[storeIndex];
         for (uint256 i = 0; i < contents.length; i++) {
-            contentList[contents[i]].state = "removed";
+            contentList[contents[i]].state = ContentState.Removed;
         }
 
-        store.state = "to be closed";
-        store.closeTime = block.number + 100; // Example buffer period
+        store.state = StoreState.ToBeClosed;
+        store.closeTime = block.number + storeBufferTime; // Example buffer period
     }
 
     function withdrawStore(uint256 storeIndex) external {
         Store storage store = storeList[storeIndex];
         require(store.owner == msg.sender, "Only the owner can withdraw from the store");
         require(block.number > store.closeTime, "Buffer period has not ended");
-        require(keccak256(bytes(store.state)) == keccak256(bytes("to be closed")), "Store must be ready to close");
+        require(store.state == StoreState.ToBeClosed, "Store must be ready to close");
 
-        store.state = "closed";
-        uint256 remainingDeposit = store.depositAmount - store.potentialPunishment;
+        store.state = StoreState.Closed;
+        // all case should be settled, so the potentialPunishment should be 0. 
+        uint256 remainingDeposit = store.depositAmount;
         if (remainingDeposit > 0) {
             require(dToken.transfer(msg.sender, remainingDeposit), "dToken transfer failed");
         }
@@ -110,19 +142,23 @@ contract Judge {
         uint256 warranty
     ) external returns (uint256 contentIndex) {
         Store storage store = storeList[storeIndex];
+        // ownership check
         require(store.owner == msg.sender, "Only the owner can create content");
+        // deposit check
         require(compensationAmount + fineAmount <= store.depositAmount - store.potentialPunishment, "Insufficient deposit");
-
-        // Validate COM format and warranty range, omitted for brevity
+        // warrenty check 
+        require(warranty >= minWarranty && warranty <= maxWarranty, "Invalid warranty period");
+        // fineAmount and compenstation amount > 0 
+        require(fineAmount > 0 && compensationAmount > 0, "Invalid fine or compensation amount");
 
         Content memory newContent = Content({
             COM: COM,
-            price: price,
+            price: price,   // price in satoshis
             compensationAmount: compensationAmount,
             finedAmount: fineAmount,
             storeIndex: storeIndex,
             warranty: warranty,
-            state: "onsale"
+            state: ContentState.OnSale
         });
 
         contentIndex = contentList.length;
@@ -140,23 +176,25 @@ contract Judge {
         bytes32 h,
         bytes32 COM,
         uint256 timestamp,
-        bytes calldata sig,
+        uint256 r, 
+        bytes memory sig,
         bytes32 preimage
     ) external returns (uint256 caseId) {
         require(dToken.transferFrom(msg.sender, address(this), challengeDepositAmount), "Challenge deposit failed");
 
         Store storage store = storeList[storeIndex];
-        require(keccak256(bytes(store.state)) != keccak256(bytes("closed")), "Store is closed");
+        require(store.state != StoreState.Closed , "Store is closed");
 
         Content storage content = contentList[contentIndex];
         require(content.COM == COM, "Content commitment mismatch");
         require(timestamp + content.warranty < block.number, "Warranty period has expired");
         require(h == sha256(abi.encodePacked(preimage)), "Invalid preimage");
 
-        // Validate the signature and merkle path
-        verifyMerkle(COM_r, merklePath, COM);
+        // Validate merkle path
+        verifyMerkle(COM_r,r, merklePath, COM);
 
-
+        // verify the signature 
+        // the sig  = sign_
         caseId = nextCaseNumber++;
         Case memory newCase = Case({
             id: caseId,
@@ -208,24 +246,27 @@ contract Judge {
         dToken.transfer(msg.sender, challengeDepositAmount + caseItem.compensationAmount);
         delete caseList[caseId];
     }
-}
+    function verifyMerkle( bytes32 leaf,uint256 r, bytes32[] calldata path, bytes32 root)pure internal returns(bool){ 
+        bytes32 computedHash = leaf;
+        // first hash(leaf || r)
+        computedHash = sha256(abi.encodePacked(computedHash, r));
+        for (uint256 i = 0; i < path.length; i++) {
+            bytes32 proofElement = path[i];
 
-function verifyMerkle( bytes32 leaf, bytes32[] calldata path, bytes32 root){
-    bytes32 computedHash = leaf;
-    for (uint256 i = 0; i < path.length; i++) {
-        bytes32 proofElement = path[i];
-
-        if (computedHash < proofElement) {
-            // Hash(current computed hash + current element of the proof)
-            computedHash = sha256(abi.encodePacked(computedHash, proofElement));
-        } else {
-            // Hash(current element of the proof + current computed hash)
-            computedHash = sha256(abi.encodePacked(proofElement, computedHash));
+            if (computedHash < proofElement) {
+                // Hash(current computed hash + current element of the proof)
+                computedHash = sha256(abi.encodePacked(computedHash, proofElement));
+            } else {
+                // Hash(current element of the proof + current computed hash)
+                computedHash = sha256(abi.encodePacked(proofElement, computedHash));
+            }
         }
-    }
 
-    // Check if the computed hash (root) is equal to the provided root
-    assert(computedHash == root);
+        // Check if the computed hash (root) is equal to the provided root
+        return computedHash == root;
+    }
 }
 
-functio 
+
+
+

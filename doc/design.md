@@ -72,7 +72,8 @@ We define a set of secret key `sk = [master key 1, master key 2, nonce, IV]`, an
 ### Hash 
 We use two different hash functions in our system: 
 - Poseidon hash: a zk-friendly hash function, we use this hash function when we need to prove the ownership of perimages.  
-- Sha256: an efficient hash function, we use this in Merkle Tree construction.                                   
+- Sha256: the hash function used in HTLC contracts in the Lightning Network.               
+- Keccak256: an evm native gas-efficient hash function.                  
 
 ## Terminology 
 
@@ -90,7 +91,7 @@ For a digital content(as a vector of bytes) `C` we can parse the content to plai
 After plaintext division, we generate cominion keys to encrypt each chunk `PTC_i` to ciphertext chunk `CTC_i`. For each `PTC_i`, we will derive a secret key `sk_payee_i` to encrypt this chunk by tunning the nonce of `sk_payee`. `sk_payee_i <= sk_payee` and `sk_i.nonce <= poseidon_hash(sk.nonce, i)`. ciphertext chunk i `CTC_i = Enc(sk_payee_i, PT_i).CT `. 
 
 We define `COM_i` as the content commitment of `PTC_i`, where `COM_i =  poseidon_hash(CTC_i)`
-Then we build a merkle tree from `COM_i` using sha256, where leaf i is `sha256(COM_i || i)`, generating the merkle root hash `COM`. The merkle path of this tree not only provides the membership proof but also provides the position information for a `COM_i`, binding `(COM_i, i)` together. 
+Then we build a merkle tree from `COM_i` using Keccak256, where leaf i is `Keccak256(COM_i || i)`, generating the merkle root hash `COM`. The merkle path of this tree not only provides the membership proof but also provides the position information for a `COM_i`, binding `(COM_i, i)` together. 
 
 ![](/doc/enc.png)
 
