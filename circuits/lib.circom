@@ -191,7 +191,17 @@ template PoD512(){
     enc_sk.sk[3] <== IV_payee;
     CT_sk <== enc_sk.CT;
 }
-
+/*
+Inputs: 
+- private sk_payee 
+- private sk_payer
+- private plaintext chunk 
+- public commitment to chunk ciphertext 
+- public chunk index 
+- public hash of sk_payer 
+- public hash of sk_payee
+- public ouputs: encrypted sk_payee
+*/
 template PoD64(){
     signal input MK_0_payee; 
     signal input MK_1_payee;

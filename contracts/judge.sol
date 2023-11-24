@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0;
 
+import "./verify.sol"; 
 interface IERC20 {
     function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
     function transfer(address recipient, uint256 amount) external returns (bool);
@@ -17,6 +18,7 @@ contract Judge {
     uint256 public storeBufferTime = (1 + 7 + 3 + 3 + 1) * 24 * 60 * 5; // 14 days blocks
     uint256 public minWarranty = 3 * 24 * 60 * 5; // 3 days blocks
     uint256 public maxWarranty = 7 * 24 * 60 * 5; // 7 days blocks
+    uint256 public challengeTime = 3 * 24 * 60 * 5; // 3 days blocks
     enum StoreState {
         Open,
         ToBeClosed,
@@ -50,11 +52,13 @@ contract Judge {
         bytes32 h_sk_payee;
         bytes32 h_sk_payer;
         bytes32 COM_r;
+        uint256 r; 
         uint256 storeId;
         uint256 compensationAmount;
         uint256 fineAmount;
         uint256 timeoutHeight;
         uint256 compensationHeight;
+        address suer; 
     }
 
     Store[] public storeList;
@@ -180,41 +184,51 @@ contract Judge {
         bytes memory sig,
         bytes32 preimage
     ) external returns (uint256 caseId) {
-        require(dToken.transferFrom(msg.sender, address(this), challengeDepositAmount), "Challenge deposit failed");
-
+        // check store first 
         Store storage store = storeList[storeIndex];
         require(store.state != StoreState.Closed , "Store is closed");
 
+        // check allowance and transfer 
+        uint256 allowedAmount = dToken.allowance(msg.sender, judgeAddress );
+        require(allowedAmount >= challengeDepositAmount, "Not enough tokens approved for transfer");
+        require(dToken.transferFrom(msg.sender, judgeAddress, challengeDepositAmount), "Token transfer failed");
+
+        // check signature
+        require(VerifyLib.verifyReceiptSig(h_sk_payer, h, COM, timestamp, sig, msg.sender), "Invalid signature");
+        
+        //check content 
         Content storage content = contentList[contentIndex];
         require(content.COM == COM, "Content commitment mismatch");
         require(timestamp + content.warranty < block.number, "Warranty period has expired");
         require(h == sha256(abi.encodePacked(preimage)), "Invalid preimage");
 
         // Validate merkle path
-        verifyMerkle(COM_r,r, merklePath, COM);
+        require(VerifyLib.verifyMerkle(COM_r,r, merklePath, COM), "Invalid merkle path");
 
-        // verify the signature 
-        // the sig  = sign_
         caseId = nextCaseNumber++;
         Case memory newCase = Case({
             id: caseId,
             h_sk_payee: h_sk_payer, // Assuming h_sk_payee is a typo and should be h_sk_payer
             h_sk_payer: h_sk_payer,
             COM_r: COM_r,
+            r: r, 
             storeId: storeIndex,
             compensationAmount: content.compensationAmount,
             fineAmount: content.finedAmount,
-            timeoutHeight: block.number + 100, // Example timeout height
-            compensationHeight: 0 // To be set when the case is defended or times out
+            timeoutHeight: block.number + challengeTime, // Example timeout height
+            compensationHeight: 0, // To be set when the case is defended or times out
+            suer: msg.sender
         });
 
         caseList.push(newCase);
         caseRecorder[h] = true;
         store.potentialPunishment += content.finedAmount;
+        store.potentialPunishment += content.compensationAmount;
         return caseId;
     }
 
-    function defendCase(uint256 caseId, bool isValidProof) external {
+    function defendCase(uint256 caseId, bytes calldata proof) external {
+        bool isValidProof = true; 
         // In a real-world scenario, you would replace `isValidProof` with actual proof verification
         require(isValidProof, "Proof of defense is not valid");
 
@@ -239,6 +253,8 @@ contract Judge {
 
     function getCompensation(uint256 caseId) external {
         Case storage caseItem = caseList[caseId];
+        //check ownership 
+        require(caseItem.suer == msg.sender, "Only the suer can get compensation");
         require(caseItem.compensationHeight > block.number, "Compensation period has expired");
         require(caseRecorder[caseItem.h_sk_payee], "Case not recorded");
 
@@ -246,25 +262,7 @@ contract Judge {
         dToken.transfer(msg.sender, challengeDepositAmount + caseItem.compensationAmount);
         delete caseList[caseId];
     }
-    function verifyMerkle( bytes32 leaf,uint256 r, bytes32[] calldata path, bytes32 root)pure internal returns(bool){ 
-        bytes32 computedHash = leaf;
-        // first hash(leaf || r)
-        computedHash = sha256(abi.encodePacked(computedHash, r));
-        for (uint256 i = 0; i < path.length; i++) {
-            bytes32 proofElement = path[i];
-
-            if (computedHash < proofElement) {
-                // Hash(current computed hash + current element of the proof)
-                computedHash = sha256(abi.encodePacked(computedHash, proofElement));
-            } else {
-                // Hash(current element of the proof + current computed hash)
-                computedHash = sha256(abi.encodePacked(proofElement, computedHash));
-            }
-        }
-
-        // Check if the computed hash (root) is equal to the provided root
-        return computedHash == root;
-    }
+   
 }
 
 

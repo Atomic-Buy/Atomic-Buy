@@ -2,4 +2,8 @@
 package-lock.json 
 node_modules/
 *r1cs
-
+circuits/*_cpp/
+circuits/*_js/ 
+*/test.circom 
+*.ptau
+*.zkey 
