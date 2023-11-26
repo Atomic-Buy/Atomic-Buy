@@ -68,7 +68,7 @@ contract Judge {
 
 
     mapping(uint256 => uint256[]) public storeToContents;
-    // k = keccak(COM, h) v = bool 
+    // k = h v = bool 
     mapping(bytes32 => bool) public caseRecorder;
 
     constructor(address _dTokenAddress) {
@@ -187,6 +187,10 @@ contract Judge {
         // check store first 
         Store storage store = storeList[storeIndex];
         require(store.state != StoreState.Closed , "Store is closed");
+        
+        // check if the case has been recorded
+        bytes32 caseKey = keccak256(abi.encodePacked(COM, h));
+        require(!caseRecorder[caseKey], "Case already recorded");
 
         // check allowance and transfer 
         uint256 allowedAmount = dToken.allowance(msg.sender, judgeAddress );
@@ -227,42 +231,62 @@ contract Judge {
         return caseId;
     }
 
-    function defendCase(uint256 caseId, bytes calldata proof) external {
-        bool isValidProof = true; 
-        // In a real-world scenario, you would replace `isValidProof` with actual proof verification
-        require(isValidProof, "Proof of defense is not valid");
+    function defendCase(
+        uint256 caseId, 
+        uint[2] calldata _pA, 
+        uint[2][2] calldata _pB, 
+        uint[2] calldata _pC, 
+        uint[8] calldata _pubSignals
+        ) external {
+            // locate case by range the case list, cause the caseID not always match the index of caseList
+            Case memory c;
+            for (uint256 i = 0; i < caseList.length; i++) {
+                if (caseList[i].id == caseId) {
+                    c = caseList[i];
+                    break;
+                }
+            }
+            // get store 
+            Store memory store = storeList[c.storeId];
+            // check ownership 
+            require(store.owner == msg.sender, "Only the store owner can defend the case");
+            // check case state 
+            require(c.compensationHeight == 0, "Case has already been defended or timed out");
 
-        Case storage caseItem = caseList[caseId];
-        Store storage store = storeList[caseItem.storeId];
-        require(store.owner == msg.sender, "Only the store owner can defend the case");
+            bool isValidProof = VerifyLib.verifyPoD(c.h_sk_payer, c.h_sk_payee, c.COM_r, c.r, _pA, _pB, _pC, _pubSignals);
+            // In a real-world scenario, you would replace `isValidProof` with actual proof verification
+            require(isValidProof, "Proof of defense is not valid");
 
-        if (isValidProof) {
-            store.depositAmount -= caseItem.fineAmount;
-            dToken.transfer(judgeAddress, caseItem.fineAmount); // Transfer fine to Judge
+            
+            require(store.owner == msg.sender, "Only the store owner can defend the case");
 
-            // Close the case
-            delete caseList[caseId];
-        } else {
-            // Set the compensation deadline
-            caseItem.compensationHeight = block.number + 100; // Example compensation deadline
-            store.depositAmount -= caseItem.fineAmount;
-            dToken.transfer(judgeAddress, caseItem.fineAmount * 10 / 100); // Assuming x% is 10%
-            // Burn the rest of the fined deposit, omitted for brevity
+            if (isValidProof) {
+                store.depositAmount -= c.fineAmount;
+                dToken.transfer(judgeAddress, c.fineAmount); // Transfer fine to Judge
+
+                // Close the case
+                delete caseList[caseId];
+            } else {
+                // Set the compensation deadline
+                c.compensationHeight = block.number + 100; // Example compensation deadline
+                store.depositAmount -= c.fineAmount;
+                dToken.transfer(judgeAddress, c.fineAmount * 10 / 100); // Assuming x% is 10%
+                // Burn the rest of the fined deposit, omitted for brevity
         }
     }
 
     function getCompensation(uint256 caseId) external {
-        Case storage caseItem = caseList[caseId];
+        Case storage c = caseList[caseId];
         //check ownership 
-        require(caseItem.suer == msg.sender, "Only the suer can get compensation");
-        require(caseItem.compensationHeight > block.number, "Compensation period has expired");
-        require(caseRecorder[caseItem.h_sk_payee], "Case not recorded");
+        require(c.suer == msg.sender, "Only the suer can get compensation");
+        require(c.compensationHeight > block.number, "Compensation period has expired");
+        require(caseRecorder[c.h_sk_payee], "Case not recorded");
 
         // Assuming the suer's address is somehow verified or recorded, omitted for brevity
-        dToken.transfer(msg.sender, challengeDepositAmount + caseItem.compensationAmount);
+        dToken.transfer(msg.sender, challengeDepositAmount + c.compensationAmount);
         delete caseList[caseId];
     }
-   
+    
 }
 
 

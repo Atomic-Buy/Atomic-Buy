@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0;
 
+import "./zk_verify.sol"; 
 
 library VerifyLib {
     function verifyMerkle(
@@ -100,5 +101,33 @@ library VerifyLib {
         }
 
         // implicitly return (r, s, v)
+    }
+
+    // verify PoD 
+    function verifyPoD(
+        bytes32 h_sk_payer, 
+        bytes32 h_sk_payee, 
+        bytes32 COM_r, 
+        uint256 r,
+        uint[2] calldata _pA, 
+        uint[2][2] calldata _pB, 
+        uint[2] calldata _pC, 
+        uint[8] calldata _pubSignals
+    ) public view returns (bool) {
+        // in _publicSignals: 
+        // [0:4) is the ciphertext of circom pod64 
+        // 4: COM_r 
+        // 5: r
+        // 6: h_sk_payer
+        // 7: h_sk_payee
+
+        // check public Signals first 
+        require(_pubSignals[4] == uint256(COM_r), "COM_r not match");
+        require(_pubSignals[5] == r, "r not match");
+        require(_pubSignals[6] == uint256(h_sk_payer), "h_sk_payer not match");
+        require(_pubSignals[7] == uint256(h_sk_payee), "h_sk_payee not match");
+
+        // check zk proof
+        return PoDVerifier.verifyProof(_pA, _pB, _pC, _pubSignals);
     }
 }
