@@ -5,7 +5,7 @@ exports.p = Scalar.fromString("2188824287183927522224640574525727508854836440041
 const Fr = new F1Field(exports.p);
 const wasm_tester = require("../circom_tester/index").wasm;
 
-/// encrypt a plaintext array into a ciphertext array in string
+/// encrypt a plaintext array (64 number in an array) into a ciphertext array in string
 // ptc should be an array of numbers in BN254
 // sk should be an object with 4 keys: MK_0, MK_1, IV, nonce
 async function PTCtoCTC(ptc, sk){
@@ -26,7 +26,7 @@ async function PTCtoCTC(ptc, sk){
 
 /// decrypt a ciphertext array into a plaintext array in string 
 // ctc should be an array of numbers in BN254
-// sk should be an object with 4 keys: MK_0, MK_1, IV, nonce
+// sk should be an object with 4 keys: MK_0, MK_1, IV, nonce, all in string format 
 async function CTCtoPTC(ctc, sk){
     // load the decrypted circuit
     const chunk_decoder = await wasm_tester("../circuits/dec64.circom"); 

@@ -9,7 +9,8 @@
     "request": "^2.88.2",
     "snarkjs": "^0.7.0",
     "tmp-promise": "^3.0.3",
-    "util": "^0.12.5"
+    "util": "^0.12.5",
+    "web3": "^4.2.2"
   },
   "devDependencies": {
     "hardhat": "^2.19.1"
