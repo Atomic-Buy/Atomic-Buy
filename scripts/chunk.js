@@ -1,16 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 const { toBigIntBE, toBufferBE } = require("bigint-buffer");
-const { F1Field } = require("ffjavascript");
-
 const CHUNK_SIZE = 30 * 64; // bytes
 const FIELD_SIZE = 30; // bytes per big number
-const F1Field = require("ffjavascript").F1Field;
-const Scalar = require("ffjavascript").Scalar;
-exports.p = Scalar.fromString(
-    "21888242871839275222246405745257275088548364400416034343698204186575808495617"
-);
-const Fr = new F1Field(exports.p);
 // a function which new a folder name from the input file name
 function getChunkFolder(inputFilePath) {
     const inputFileName = path.basename(inputFilePath);
@@ -39,10 +31,13 @@ function divideIntoChunks(inputFilePath) {
             // padding the "paddingLengh -1" as a sigle byte first, then padding the rest as 0
             paddedChunk = Buffer.concat([
                 chunk,
-                Buffer.alloc(paddingLength , 0)
+                Buffer.alloc(paddingLength, 0),
             ]);
             // write the padding length to a new file in this folder `chunkFolder` `meta.txt`
-            fs.writeFileSync(path.join(chunkFolder, "meta.txt"), paddingLength);
+            fs.writeFileSync(
+                path.join(chunkFolder, "meta.txt"),
+                paddingLength.toString()
+            );
         } else {
             paddedChunk = chunk;
         }
@@ -63,7 +58,7 @@ function rebuildFromFileChunks(outputFilePath, chunkFolder) {
     const chunks = [];
     // count how many chunks in the folder
     const files = fs.readdirSync(chunkFolder);
-    // count the file number in format *.chunk in this folder 
+    // count the file number in format *.chunk in this folder
     const chunkNum = files.filter((file) => file.endsWith(".chunk")).length;
 
     for (let i = 0; i < chunkNum; i++) {
@@ -76,9 +71,24 @@ function rebuildFromFileChunks(outputFilePath, chunkFolder) {
     // read the padding length from `meta.txt`
     const paddingLength = fs.readFileSync(path.join(chunkFolder, "meta.txt"));
     // remove the padding
-    const fileDataWithoutPadding = fileData.slice(0, fileData.length - paddingLength);
+    const fileDataWithoutPadding = fileData.slice(
+        0,
+        fileData.length - paddingLength
+    );
     fs.writeFileSync(outputFilePath, fileDataWithoutPadding);
+}
 
+// Function to rebuild the original file from chunks
+function rebuildFromBufferChunks(outputFilePath, chunks, chunkFolder) {
+    const fileData = Buffer.concat(chunks);
+    // read the padding length from `meta.txt`
+    const paddingLength = fs.readFileSync(path.join(chunkFolder, "meta.txt"));
+    // remove the padding
+    const fileDataWithoutPadding = fileData.slice(
+        0,
+        fileData.length - paddingLength
+    );
+    fs.writeFileSync(outputFilePath, fileDataWithoutPadding);
 }
 
 // Function to convert a chunk to a big number array
@@ -104,16 +114,24 @@ function bigNumberArrayToChunk(bigNumbers) {
 function inputFileToBigNumberArrays(inputFilePath) {
     const chunkFolder = getChunkFolder(inputFilePath);
     const chunkFilePaths = divideIntoChunks(inputFilePath, chunkFolder);
-    
+
     // convert each chunk to big number array
     const bigNumberArrays = chunkFilePaths.map((chunkFilePath) =>
         chunkToBigNumberArray(chunkFilePath)
     );
-    // write the big number arrays into json array, one chunk array one file , in format `pt_i.json` 
+    // range BN array, convert to string
+    bigNumberArrays.forEach((bigNumberArray) => {
+        for (let i = 0; i < bigNumberArray.length; i++){
+            bigNumberArray[i] = bigNumberArray[i].toString();
+        }
+    });
+    // write the big number arrays into json array, one chunk array one file , in format `pt_i.json`
     for (let i = 0; i < bigNumberArrays.length; i++) {
-        fs.writeFileSync(path.join(chunkFolder, `pt_${i}.json`), JSON.stringify(bigNumberArrays[i]));
+        fs.writeFileSync(
+            path.join(chunkFolder, `pt_${i}.json`),
+            JSON.stringify(bigNumberArrays[i])
+        );
     }
-
 }
 
 // Function to build a file from arrays of big numbers
@@ -128,16 +146,23 @@ function buildFileFromBigNumberArrays(chunkFolder, outputFilePath) {
         const chunk = fs.readFileSync(chunkFilePath);
         bigNumberArrays.push(JSON.parse(chunk));
     }
+    // convert the string to BN
+    bigNumberArrays.forEach((bigNumberArray) => {
+        for (let i = 0; i < bigNumberArray.length; i++){
+            bigNumberArray[i] = BigInt(bigNumberArray[i]);
+        }
+    });
     // convert each big number array to chunk
     const chunks = bigNumberArrays.map((bigNumbers) =>
         bigNumberArrayToChunk(bigNumbers)
     );
     // rebuild the file from chunks
-    rebuildFromFileChunks(outputFilePath, chunkFolder);
+    rebuildFromBufferChunks(outputFilePath, chunks, chunkFolder);
 }
 
 module.exports = {
     divideIntoChunks,
+    getChunkFolder,
     rebuildFromFileChunks,
     chunkToBigNumberArray,
     bigNumberArrayToChunk,
