@@ -7,3 +7,4 @@ circuits/*_js/
 */test.circom 
 *.ptau
 *.zkey 
+data/src/
