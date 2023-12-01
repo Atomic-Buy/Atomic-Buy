@@ -50,5 +50,6 @@ async function LoadCIminionKeyJson(inputPath){
 module.exports = {
     GenCiminionKey, 
     GenCiminionKeyJson, 
-    LoadCIminionKeyJson
+    LoadCIminionKeyJson, 
+    randomScalar
 }

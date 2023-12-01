@@ -1,5 +1,5 @@
-const Web3 = require("web3");
-const web3 = new Web3();
+const web3 = require("web3");
+
 
 /// build a merkle tree and return the merkle root
 // input: an array of finie field elements COM_r in Fr in string format.
@@ -54,6 +54,10 @@ function MerkleRootVerify(COMr, root) {
 }
 /// return the merkle path of r-th leaf and the root of COMs
 function MerklePath(COMs, r) {
+    // check r first, r should be smaller than the number of leaves
+    if (r >= COMs.length || r < 0 || COMs.length == 0 ) {
+        return [];
+    }
     let index = r;
     // caculate the leaves leaf_i = keccak256(input[i], i)
     let leaves = [];
@@ -100,10 +104,10 @@ function MerklePath(COMs, r) {
         root = temp;
         index = index >> 1;
     }
-    return path, root;
+    return path;
 }
 
-/// Verify Merkle path 
+/// Verify Merkle path, COMr, r should be string, root should be string in solidity format '0x...', and pathshould be array of string like '0x...'. 
 function MerklePathVerify(COMr,r, path, root) {
     // caculate leaf_r first 
     let leaf_r = web3.utils.soliditySha3(
