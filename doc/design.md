@@ -80,6 +80,7 @@ We use two different hash functions in our system:
 Important terminology to understand our system. 
 
 ### Content Commitment 
+
 Merchants commits digital contents in `Judge`. 
 
 Every payee(merchant) and payer(customer) has its own reusable ECDSA identity key pairs `ek = (esk, epk)`. This is used to verify the identity of payees and payers. Besides payee will generate a new ciminion symmetric encryption key`sk_payee` pair for content commitment. 
@@ -91,11 +92,11 @@ For a digital content(as a vector of bytes) `C` we can parse the content to plai
 After plaintext division, we generate cominion keys to encrypt each chunk `PTC_i` to ciphertext chunk `CTC_i`. For each `PTC_i`, we will derive a secret key `sk_payee_i` to encrypt this chunk by tunning the nonce of `sk_payee`. `sk_payee_i <= sk_payee` and `sk_i.nonce <= poseidon_hash(sk.nonce, i)`. ciphertext chunk i `CTC_i = Enc(sk_payee_i, PT_i).CT `. 
 
 We define `COM_i` as the content commitment of `PTC_i`, where `COM_i =  poseidon_hash(CTC_i)`
-Then we build a merkle tree from `COM_i` using Keccak256, where leaf i is `Keccak256(COM_i || i)`, generating the merkle root hash `COM`. The merkle path of this tree not only provides the membership proof but also provides the position information for a `COM_i`, binding `(COM_i, i)` together. 
+Then we build a merkle tree from `COM_i` using Keccak256, where leaf i is `Keccak256(COM_i || i)`, generating the merkle root hash `COM`. The merkle path of this tree not only provides the membership proof but also provides the position information for a `COM_i`, binding `(COM_i, i)` together. Based on the same method, we build content ID `CID` from `PTC_i`. 
 
 ![](/doc/enc.png)
 
-Any merchant can commit a content `C` to`Judge` by pushing the (`epk_payee`, `COM`, `h_sk = poseidon_hash(sk_payee)`) to it. This send a message **"I have a content encrypted by `sk`**. 
+Any merchant can commit a content `C` to`Judge` by pushing the (`epk_payee`, `CID`, `COM`, `h_sk = poseidon_hash(sk_payee)`) to it. This send a message **"I have a content encrypted by `sk`**. 
 
 
 ### Proof of Content 
@@ -155,9 +156,10 @@ We denoted the claim of delivery as `CoD`, where `CoD(public h_sk_payer, public 
 - `Enc(sk_payee_r, PTC_r) = CTC_r` and 
 - `poseidon_hash(CTC_r) == COM_r ` and 
 - `Enc(sk_payer, sk_payee).CT = CT_sk` and 
-- `poseidon_hash(sk_payer) == h_sk_payer`
+- `poseidon_hash(sk_payer) == h_sk_payer` and 
+- `poseidon_hash(PTC_r)` is the r-th leaf of `PTCs`.
 
-In human readable word, this claim that **"I will send you `sk_payee`, which is the same key that I committed in `Judge`; The secret key(`sk_payee`) can encrypt the plaintext chunk `PTC_r` into ciphertext chunk`CTC_r`; Hash of `CTC_r` is the same as the cusomter received; We deliver the right key `sk_payee` encrypted by customer key provided before(committed by `h_sk_payer`)."**
+In human readable word, this claim that **"I will send you `sk_payee`, which is the same key that I committed in `Judge`; The secret key(`sk_payee`) can encrypt the plaintext chunk `PTC_r` into ciphertext chunk`CTC_r`; Hash of `CTC_r` is the same as the cusomter received; The `PTC_r` is an element in merkle root `CID`; We deliver the right key `sk_payee` encrypted by customer key provided before(committed by `h_sk_payer`)."**
 The proof of `CoD` is denoted as `PoD`, which is generated using Groth16 in Circom and Snarkjs. 
 
 Judge can verify the `PoD` by querying `h_payer, COM` from the the `Judge`. 
@@ -171,7 +173,7 @@ We seperate the whole process into 4 phases:
 - **Phase One**: Content Registration. Merchants must register their content and its price on `Judge`, along with depositing some funds. This holds the merchants accountable. Additionally, merchants are required to create a Proof of Content (PoC) for the content. Subsequently, merchants can distribute the encrypted content and `PoC` on any platform such as Twitter or Nostr. Potential customers can then verify the content's quality and ensure that the ciphertext they receive corresponds with the content committed on Judge.
 - **Phase Two**: Payment. Leveraging the advantages of the Lightning Network (LN), a payment proof PoP ("alice pays x satoshis for content `c` before time `T`") can be established solely between the merchant and customer. Should any issues arise, the customer can present the `PoP` to Judge for resolution.
 - **Phase Three**: Content delivery: Once the merchant believe that the bill has been payment, it need to delivery the key that can unlocked the ciphertext ASAP to the customer in any message routine platform. 
-- **Phase Four**:  Challenge. The challenge phase ensures that keys are delivered to the customer via Judge. Merchants are required to construct a Proof of Delivery (PoD) to verify the delivery of keys. Failure to provide a `PoD` within the stipulated timeframe results in penalties imposed by Judge on the merchant and compensation awarded to the customer.
+- **Phase Four**:  Challenge. The challenge phase ensures that keys are delivered to the customer via Judge. Merchants are required to construct a Proof of Delivery (PoD) to verify the delivery of keys. Failure to provide a `PoD` within the stipulated timeframe results in penalties imposed by Judge on the merchant and compensation awarded to the customer. FOr the safety of this protocol, the customer has a second change to challenge the store on a different leaf rather than r-th leaf after the 
 
 ## Bond Contract in Judge 
 
