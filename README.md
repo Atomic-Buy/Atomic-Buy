@@ -1,5 +1,9 @@
 # Atomic Buy
 
+> Working on the Proof of Concept... 
+
+> [Whitepaper Draft](./doc/design.md) 
+
 Atom Buy: A Decentralized Framework for Trustless and Atomic Content Transactions on the Lightning Network
 
 We introduce Atom Buy, a framework designed to facilitate trustless and atomic transactions for digital content purchases over the Lightning Network. Our proposed scheme ensures accountability for all digital content and enables each transaction to be atomic and verifiable through the application of cryptographic primitives such as Zero-Knowledge Proofs (ZKP). Furthermore, we leverage blockchain technology to safeguard each purchase and to monitor and address any instances of misconduct.
@@ -24,6 +28,6 @@ Core ZK Circuits
 ![basic workflow](./doc/design.png)
 
 
-For more detail, please read our white paper: [Draft 0.11](./doc/design.md)
+For more detail, please read our white paper: [Draft 0.12](./doc/design.md)
 
 
