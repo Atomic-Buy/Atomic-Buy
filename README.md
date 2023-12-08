@@ -28,6 +28,6 @@ Core ZK Circuits
 ![basic workflow](./doc/design.png)
 
 
-For more detail, please read our white paper: [Draft 0.12](./doc/design.md)
+For more detail, please read our white paper: [Draft 0.20](./doc/design.md)
 
 

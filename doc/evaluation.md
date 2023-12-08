@@ -1,0 +1,13 @@
+- outline 
+    - attributes 
+        - performance: 
+            - compare with other p2p file distribution system
+            - cost
+                - time 
+                - com round 
+                - extra file size 
+                - enc/dec cost 
+        - attributes we provides uniquely 
+            - atomic 
+            - cid 
+            - prefix system 
