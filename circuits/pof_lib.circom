@@ -13,7 +13,7 @@ Output:
     - hash(CTC[r])
 */
 
-component PoF64(){
+template PoF64(){
     signal input MK_0_payee; 
     signal input MK_1_payee;
     signal input nonce_payee;
@@ -28,7 +28,6 @@ component PoF64(){
     payee_check.MK_0 <== MK_0_payee;
     payee_check.MK_1 <== MK_1_payee;
     payee_check.nonce <== nonce_payee;
-    payee_check.IV <== IV_payee;
     payee_check.h_sk === h_sk_payee;
 
     // derive 
@@ -39,15 +38,15 @@ component PoF64(){
 
     // dec CTC_r 
     component dec = chunk_dec64(); 
-    chunk_dec64.MK_0 <== MK_0_payee;
-    chunk_dec64.MK_1 <== MK_1_payee;
-    chunk_dec64.nonce <== nonce_derive_out;
-    chunk_dec64.IV <== IV_payee;
-    chunk_dec64.CT <== CTC_r;
+    dec.MK_0 <== MK_0_payee;
+    dec.MK_1 <== MK_1_payee;
+    dec.nonce <== nonce_derive_out;
+    dec.IV <== IV_payee;
+    dec.CT <== CTC_r;
 
     // hash 
     component hash = hash64();
-    hash.in <== dec.out;
+    hash.in <== dec.PT;
 
     // output
     h_CTC_r <== hash.out;

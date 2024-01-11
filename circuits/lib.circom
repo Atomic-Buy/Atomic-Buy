@@ -117,13 +117,11 @@ template sk_hash(){
     signal input MK_0;
     signal input MK_1;
     signal input nonce;
-    signal input IV;
     signal output h_sk;
-    component hash = Poseidon(4); 
+    component hash = Poseidon(3); 
     hash.inputs[0] <== MK_0;
     hash.inputs[1] <== MK_1;
     hash.inputs[2] <== nonce;
-    hash.inputs[3] <== IV;
     h_sk <== hash.out;
 }
 
