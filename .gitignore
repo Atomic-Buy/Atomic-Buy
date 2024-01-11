@@ -11,3 +11,4 @@ circuits/*_js/
 # test 
 data/src/
 tmp/
+circuits/circomlib/
